@@ -1,0 +1,47 @@
+name: Deploy Frontend to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - 'tailwind.config.cjs'
+      - 'postcss.config.cjs'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/dist
+          force_orphan: true
+          publish_branch: gh-pages
+          cname: prospectia.igoro944.github.io  # Optional: if you have a custom domain
