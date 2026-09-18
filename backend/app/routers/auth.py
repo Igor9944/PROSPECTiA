@@ -19,32 +19,25 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 async def login(request: Request, db: Session = Depends(get_db)):
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
-    
     content_type = request.headers.get("content-type", "")
-    logger.debug(f"Content-Type: {content_type}")
-    
+
     if "application/json" in content_type:
         body = await request.json()
-        logger.debug(f"JSON body: {body}")
         email = body.get("email") or body.get("username")
         password = body.get("password")
     else:
         form = await request.form()
-        logger.debug(f"Form data: {dict(form)}")
         email = form.get("username") or form.get("email")
         password = form.get("password")
-    
-    logger.debug(f"Parsed email: {email}")
-    logger.debug(f"Parsed password: {'***' if password else None}")
-    
+
     if not email or not password:
         raise HTTPException(status_code=422, detail="Email et mot de passe requis")
     user = authenticate(db, email, password)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email ou mot de passe incorrect")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email ou mot de passe incorrect",
+        )
     return issue_token(user)
 
 

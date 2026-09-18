@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from sqlalchemy.orm import Session
 
@@ -25,24 +25,10 @@ def create_user(db: Session, payload: UserCreate) -> User:
 
 
 def authenticate(db: Session, email: str, password: str) -> User | None:
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
-    
     user = get_user_by_email(db, email)
-    logger.debug(f"User found: {user}")
-    if not user:
-        logger.debug("No user found")
+    if not user or not user.is_active:
         return None
-    logger.debug(f"User active: {user.is_active}")
-    if not user.is_active:
-        logger.debug("User not active")
-        return None
-    logger.debug(f"Verifying password for: {email}")
-    logger.debug(f"Password hash starts with: {user.password_hash[:30]}")
-    result = verify_password(password, user.password_hash)
-    logger.debug(f"Verify password result: {result}")
-    if not result:
+    if not verify_password(password, user.password_hash):
         return None
     return user
 

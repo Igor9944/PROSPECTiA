@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,12 +8,22 @@ from app.core.database import Base, engine
 from app.models import Activity, AIEvaluation, Company, Contact, Conversion, FollowUp, Prospect, User  # noqa: F401
 from app.routers import api_router
 
-Base.metadata.create_all(bind=engine)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    if settings.SEED_ON_START:
+        from seed import seed
+
+        seed()
+    yield
+
 
 app = FastAPI(
     title="PROSPECTIA",
     description="CRM de prospection commerciale pour PME informatiques",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -23,15 +35,6 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_PREFIX)
-
-
-@app.on_event("startup")
-def seed_if_requested() -> None:
-    if not settings.SEED_ON_START:
-        return
-    from seed import seed
-
-    seed()
 
 
 @app.get("/")
