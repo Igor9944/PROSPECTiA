@@ -1,7 +1,10 @@
 import axios from "axios";
 
+const appBase = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+const apiBase = import.meta.env.VITE_API_URL || "/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL: apiBase,
 });
 
 api.interceptors.request.use((config) => {
@@ -17,8 +20,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
-      if (!window.location.pathname.startsWith("/login")) {
-        window.location.href = "/login";
+      const loginPath = `${appBase}/login`;
+      if (!window.location.pathname.startsWith(loginPath) && !window.location.pathname.endsWith("/login")) {
+        window.location.href = loginPath;
       }
     }
     return Promise.reject(error);

@@ -56,7 +56,7 @@ export default function AppLayout() {
               }
             >
               <link.icon size={18} className="text-sky-300" />
-              <span className="hidden lg inline">{link.label}</span>
+              <span className="hidden lg:inline">{link.label}</span>
             </NavLink>
           ))}
           {user?.role === "ADMIN" && (
@@ -69,7 +69,7 @@ export default function AppLayout() {
               }
             >
               <Users size={18} className="text-sky-300" />
-              <span className="hidden lg inline">Utilisateurs</span>
+              <span className="hidden lg:inline">Utilisateurs</span>
             </NavLink>
           )}
           <NavLink
@@ -81,7 +81,7 @@ export default function AppLayout() {
             }
           >
             <Settings size={18} className="text-sky-300" />
-            <span className="hidden lg inline">Paramètres</span>
+            <span className="hidden lg:inline">Paramètres</span>
           </NavLink>
         </nav>
       </aside>

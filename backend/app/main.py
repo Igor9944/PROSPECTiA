@@ -25,6 +25,15 @@ app.add_middleware(
 app.include_router(api_router, prefix=settings.API_PREFIX)
 
 
+@app.on_event("startup")
+def seed_if_requested() -> None:
+    if not settings.SEED_ON_START:
+        return
+    from seed import seed
+
+    seed()
+
+
 @app.get("/")
 def root():
     return {"name": settings.PROJECT_NAME, "docs": "/docs"}

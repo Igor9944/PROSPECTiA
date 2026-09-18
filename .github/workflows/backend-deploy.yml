@@ -1,32 +1,23 @@
-name: Deploy Backend to Render
+name: Backend CI and Render Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'backend/**'
-      - 'requirements.txt'
-      - 'alembic/**'
-      - 'docker-compose.yml'
-      - 'backend/Dockerfile'
-      - 'backend/mise.toml'
-      - 'backend/pytest.ini'
-      - 'backend/seed.py'
-      - 'backend/.env.example'
-      - 'backend/app/**'
-      - 'backend/tests/**'
-      - 'backend/core/**'
-      - 'backend/services/**'
-      - 'backend/schemas/**'
-      - 'backend/routers/**'
-      - 'backend/db/**'
-      - 'backend/dependencies/**'
-      - 'backend/models/**'
-      - 'backend/alembic/versions/**'
+      - "backend/**"
+      - "render.yaml"
+      - ".github/workflows/backend-deploy.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,34 +25,30 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        run: |
-          cd backend
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Run tests
-        run: |
-          cd backend
-          pytest -v
+        run: pytest -v
 
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to Render
-        # This is a placeholder - you'll need to add your Render service details
-        # You can use Render's API or a webhook trigger
-        # For now, we'll just echo a message
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
-          echo "Deploying backend to Render..."
-          echo "To automate this, you need to:"
-          echo "1. Create a Render service connected to this repo"
-          echo "2. Add RENDER_SERVICE_ID and RENDER_API_KEY as GitHub secrets"
-          echo "3. Uncomment and configure the Render deploy step below"
-          #
-          # Example Render deploy (uncomment to use):
-          # curl -X POST \
-          #   -H "Accept: application/json" \
-          #   -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-          #   -H "Content-Type: application/json" \
-          #   -d '{"serviceId": "${{ secrets.RENDER_SERVICE_ID }}"}'
-          #   https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK is not set — backend tests passed, deploy skipped."
+            echo "Next step: import render.yaml on Render, then add the service deploy hook as the GitHub secret RENDER_DEPLOY_HOOK."
+            echo "Then set the GitHub secret VITE_API_URL to https://YOUR-SERVICE.onrender.com/api and redeploy the frontend."
+            exit 0
+          fi
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK"
+          echo "Render deploy triggered."

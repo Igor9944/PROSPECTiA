@@ -1,7 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+const pagesBase = process.env.GITHUB_PAGES === "true" ? "/PROSPECTiA/" : "/";
+
 export default defineConfig({
+  base: pagesBase,
   plugins: [react()],
   server: {
     port: 4173,

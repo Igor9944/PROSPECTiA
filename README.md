@@ -1,209 +1,109 @@
-# PROSPECTIA
+# PROSPECTIA (ProspectAI)
 
-A comprehensive CRM web application for commercial prospect management.
+CRM de prospection commerciale — FastAPI + React.
 
-## Features
+**Frontend live :** [https://igor9944.github.io/PROSPECTiA/](https://igor9944.github.io/PROSPECTiA/)  
+**API docs :** une fois le backend Render en ligne → `/docs`
 
-- User authentication and authorization (JWT-based)
-- Role-based access control (ADMIN, COMMERCIAL, MANAGER)
-- Company and prospect management
-- Contact management linked to prospects
-- Activity tracking (calls, meetings, emails, etc.)
-- Follow-up scheduling with reminders
-- Prospect conversion tracking
-- AI-powered prospect evaluation (with local fallback)
-- Dashboard with metrics and charts
-- Prospect qualification and scoring system
-- Activities timeline view
-- Follow-ups management with calendar
-- Reports module with filtering and CSV export
-- User management interface (admin only)
-- Responsive design with Tailwind CSS
-- API documentation with Swagger
-- Dockerized for easy deployment
+Comptes de démo (après seed) :
 
-## Tech Stack
+| Rôle | Email | Mot de passe |
+|---|---|---|
+| Admin | `admin@example.com` | `Admin123!` |
+| Commercial | `commercial@example.com` | `Commercial123!` |
+| Manager | `manager@example.com` | `Manager123!` |
 
-### Backend
-- **Framework**: FastAPI (Python)
-- **Database**: SQLAlchemy 2.0 with SQLite (development), configurable to PostgreSQL/MySQL
-- **Authentication**: JWT (python-jose) with bcrypt password hashing
-- **Validation**: Pydantic v2
-- **Migrations**: Alembic
-- **Testing**: Pytest
+## Déploiement
 
-### Frontend
-- **Framework**: React 18 with Vite
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: React Context / hooks (or Redux/TBD)
-- **Data Fetching**: Axios
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **Routing**: React Router DOM
+### Frontend — GitHub Pages (automatique)
 
-## Getting Started
+Chaque push sur `frontend/**` (ou un lancement manuel du workflow) construit le SPA et le publie sur GitHub Pages :
 
-### Prerequisites
-- Docker and Docker Compose (for containerized deployment)
-- OR
-- Python 3.11+ and Node.js 18+ (for local development)
+`https://igor9944.github.io/PROSPECTiA/`
 
-### Option 1: Using Docker Compose (Recommended)
-1. Clone the repository
-2. Run `docker compose up --build`
-3. The backend will be available at `http://localhost:8000`
-4. The frontend will be available at `http://localhost:3000`
+Le workflow `Deploy Frontend to GitHub Pages` est déjà en place.
 
-### Option 2: Local Development
-#### Backend
-1. Navigate to the `backend` directory
-2. Create a virtual environment: `python -m venv venv`
-3. Activate the virtual environment:
-   - Windows: `venv\Scripts\activate`
-   - macOS/Linux: `source venv/bin/activate`
-4. Install dependencies: `pip install -r requirements.txt`
-5. Set up environment variables (copy `.env.example` to `.env` and adjust)
-6. Run the database migrations: `alembic upgrade head`
-7. Start the server: `uvicorn app.main:app --reload`
-8. The API will be available at `http://localhost:8000`
+**Secret GitHub à ajouter** (Settings → Secrets and variables → Actions) :
 
-#### Frontend
-1. Navigate to the `frontend` directory
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
-4. The frontend will be available at `http://localhost:5173` (Vite default)
+- `VITE_API_URL` — URL publique de l’API, **avec** le suffixe `/api`  
+  Exemple : `https://prospectia-api.onrender.com/api`
 
-### Seeding Demo Data
-To populate the database with demo data:
+Sans ce secret, le frontend appelle `/api` (utile en local via le proxy Vite, pas sur Pages).
+
+### Backend — Render (Blueprint)
+
+1. Ouvre [Render](https://dashboard.render.com) → **New** → **Blueprint**
+2. Branche le dépôt `Igor9944/PROSPECTiA` — le fichier `render.yaml` crée :
+   - le service web `prospectia-api`
+   - la base Postgres `prospectia-db`
+3. Copie le *Deploy Hook* du service Render
+4. Ajoute le secret GitHub `RENDER_DEPLOY_HOOK` avec cette URL
+5. Mets `VITE_API_URL` (voir ci-dessus) puis relance le workflow frontend
+
+Le backend expose `/health`. `SEED_ON_START=true` peuple la base au premier démarrage.
+
+### Frontend — Vercel (optionnel)
+
+Root Directory = `frontend`. `frontend/vercel.json` gère le routing SPA.  
+Ajoute la variable d’environnement `VITE_API_URL` identique à celle de Pages.
+
+> L’ancienne URL `frontend-mr-flx-s-projects.vercel.app` n’appartient pas à ce dépôt : elle est protégée par le SSO Vercel d’un autre compte. Ne plus l’utiliser.
+
+## Lancer en local
+
+### Docker Compose
+
 ```bash
-# Backend
+docker compose up --build
+```
+
+- API : http://localhost:8000 (`/docs` pour Swagger)
+- Front : http://localhost:3000
+
+### Sans Docker
+
+**Backend**
+
+```bash
 cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+alembic upgrade head
 python seed.py
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## API Documentation
-Once the backend is running, visit:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+**Frontend**
 
-## Testing
-### Backend Tests
-```bash
-cd backend
-pytest
-```
-
-### Frontend Tests
-*(To be implemented)*
 ```bash
 cd frontend
-npm test
+npm ci
+npm run dev
 ```
 
-## Deployment
-The application is designed to be deployed using Docker Compose. For production, consider:
-- Using a production-grade database (PostgreSQL/MySQL)
-- Setting strong SECRET_KEY and environment variables
-- Using a reverse proxy (NGINX) for SSL termination
-- Configuring proper restart policies
+Le proxy Vite envoie `/api` vers `http://127.0.0.1:8000`.
 
-## Project Structure
+## Stack
+
+- **Backend :** FastAPI, SQLAlchemy 2, JWT, Alembic, Pytest
+- **Frontend :** React 18, Vite, TypeScript, Tailwind, Recharts
+- **CI :** GitHub Actions (pytest + build Pages)
+
+## Variables d’environnement backend
+
+Voir `backend/.env.example` :
+
+- `DATABASE_URL` — SQLite en local, Postgres en production
+- `SECRET_KEY` — signature JWT (obligatoire en prod)
+- `CORS_ORIGINS` — origines autorisées, séparées par des virgules
+- `SEED_ON_START` — `true` pour peupler la base au démarrage
+- `AI_PROVIDER` / `AI_API_KEY` — qualification IA (`none` par défaut)
+
+## Tests
+
+```bash
+cd backend && pytest -v
+cd frontend && npm test
 ```
-PROSPECTIA/
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── v1/
-│   │   │       └── api.py
-│   │   ├── core/
-│   │   │   ├── config.py
-│   │   │   ├── database.py
-│   │   │   └── security.py
-│   │   ├── models/
-│   │   │   ├── base.py
-│   │   │   ├── user.py
-│   │   │   ├── company.py
-│   │   │   ├── prospect.py
-│   │   │   ├── contact.py
-│   │   │   ├── activity.py
-│   │   │   ├── follow_up.py
-│   │   │   ├── conversion.py
-│   │   │   └── ai_evaluation.py
-│   │   ├── schemas/
-│   │   │   ├── user.py
-│   │   │   ├── company.py
-│   │   │   ├── prospect.py
-│   │   │   ├── contact.py
-│   │   │   ├── activity.py
-│   │   │   ├── follow_up.py
-│   │   │   ├── conversion.py
-│   │   │   └── ai_evaluation.py
-│   │   ├── services/
-│   │   │   ├── user_service.py
-│   │   │   ├── company_service.py
-│   │   │   ├── prospect_service.py
-│   │   │   ├── contact_service.py
-│   │   │   ├── activity_service.py
-│   │   │   ├── follow_up_service.py
-│   │   │   ├── conversion_service.py
-│   │   │   ├── ai_evaluation_service.py
-│   │   │   └── ai_service.py
-│   │   ├── routers/
-│   │   │   ├── user.py
-│   │   │   ├── company.py
-│   │   │   ├── prospect.py
-│   │   │   ├── contact.py
-│   │   │   ├── activity.py
-│   │   │   ├── follow_up.py
-│   │   │   ├── conversion.py
-│   │   │   └── ai_evaluation.py
-│   │   ├── main.py
-│   │   └── seed.py
-│   ├── tests/
-│   │   └── test_user.py
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── .env.example
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   └── ...
-│   │   ├── App.tsx
-│   │   ├── index.css
-│   │   └── main.tsx
-│   ├── public/
-│   │   └── index.html
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── vite.config.ts
-│   ├── tailwind.config.cjs
-│   └── postcss.config.cjs
-├── docker-compose.yml
-└README.md
-```
-
-## Environment Variables
-The backend uses the following environment variables (see `.env.example`):
-
-- `DATABASE_URL`: Database connection string (default: SQLite)
-- `SECRET_KEY`: Secret key for JWT signing
-- `ACCESS_TOKEN_EXPIRE_MINUTES`: Access token expiration time
-- `AI_PROVIDER`: AI provider to use (`none` for fallback, or `openai` for OpenAI API)
-- `AI_API_KEY`: API key for the AI provider (if applicable)
-
-## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a pull request
-
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-- Inspired by various CRM systems
-- Built with FastAPI and React
-- Thanks to the open-source community
