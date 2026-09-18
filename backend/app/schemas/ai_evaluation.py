@@ -12,7 +12,7 @@ class AIAnalysisOut(BaseModel):
     suggested_priority: str
     next_action: str
     outreach_message: str
-    provider: str
+    provider: str = "none"
 
 
 class AIEvaluationOut(BaseModel):
