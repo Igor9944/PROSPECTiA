@@ -1,23 +1,25 @@
-# Use the official Node image from the Docker Hub
-FROM node:18-alpine
-
-# Set the working directory in the container
+# Build stage
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy the package.json and package-lock.json (if available)
-COPY package*.json ./
+COPY package.json package-lock.json* ./
+RUN npm ci
 
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application code
 COPY . .
 
-# Build the app for production
+# VITE_API_URL fourni par Railway au build (Variables)
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
+ENV GITHUB_PAGES=false
+
 RUN npm run build
 
-# Expose the port the app runs on
-EXPOSE 3000
+# Serve stage — Caddy pour le routing SPA
+FROM caddy:2-alpine
+WORKDIR /srv
 
-# Start the app
-CMD ["npm", "run", "serve", "--", "--", "--host", "0.0.0.0", "--port", "3000"]
+COPY --from=build /app/dist /srv
+COPY Caddyfile /etc/caddy/Caddyfile
+
+EXPOSE 3000
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
