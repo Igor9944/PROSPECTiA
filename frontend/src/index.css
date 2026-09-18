@@ -1,0 +1,71 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Inter", sans-serif;
+  --bg-1: #06131f;
+  --bg-2: #0f1f2d;
+  --bg-3: #0b2237;
+  --panel: rgba(15, 23, 42, 0.78);
+  --panel-strong: rgba(15, 23, 42, 0.94);
+  --panel-soft: rgba(15, 23, 42, 0.62);
+  --line: rgba(148, 163, 184, 0.18);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --primary: #38bdf8;
+  --primary-strong: #2563eb;
+  --success: #34d399;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply min-h-screen antialiased;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.24), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.22), transparent 30%),
+    linear-gradient(135deg, #020817 0%, #071827 22%, #0b1d2d 52%, #081422 100%);
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.card {
+  @apply rounded-2xl border border-slate-700/70 bg-slate-900/70 shadow-xl shadow-slate-950/40 backdrop-blur-sm;
+}
+
+.brand-word {
+  background: linear-gradient(90deg, #e0f2fe 0%, #7dd3fc 20%, #38bdf8 42%, #60a5fa 66%, #dbeafe 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.auth-shell {
+  background:
+    radial-gradient(circle at top, rgba(14, 165, 233, 0.22), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.85), rgba(7, 16, 31, 0.95));
+}
+
+.glass-panel {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 25px 80px rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(14px);
+}
+
+.soft-input {
+  @apply w-full rounded-xl border border-slate-700/80 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:shadow-[0_0_0_3px_rgba(56,189,248,0.2)];
+}
+
+.primary-button {
+  @apply w-full rounded-xl bg-gradient-to-r from-sky-400 to-blue-600 px-4 py-2.5 font-semibold text-white shadow-lg shadow-sky-500/30 transition hover:opacity-95;
+}
